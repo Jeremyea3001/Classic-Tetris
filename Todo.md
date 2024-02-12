@@ -1,2 +1,3 @@
-1. Séparer le code en modules pour plus de lisibilité
-2. 
+1. Coder les rotations
+2. Ajouter les couleurs pour les différentes pièces
+3. Plus
