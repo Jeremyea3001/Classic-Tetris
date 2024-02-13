@@ -39,7 +39,7 @@ def initialiser_interface() -> None :
     for i in range(cases_longueur + 1) :
         ligne(i * taille_case, 0, i * taille_case, hauteur_plateau, "gray", tag="bordure")
     for i in range(cases_hauteur) :
-        ligne(0, i * taille_case, longueur_plateau / 1.5, i * taille_case, "gray", tag="bordure")
+        ligne(0, i * taille_case, longueur_plateau / 1.7, i * taille_case, "gray", tag="bordure")
 
 
 def remplir_case(i: int, j: int, piece: str) -> None :
