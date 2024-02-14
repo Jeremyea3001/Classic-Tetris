@@ -3,62 +3,80 @@ import time
 import random
 
 
-sac = ["I", "T", "L", "J", "S", "Z", "O"]
+SAC = ["I", "T", "L", "J", "S", "Z", "O"]
 taille_case = 30
 cases_longueur = 10
 cases_hauteur = 24
 longueur_plateau = taille_case * cases_longueur * 1.7
 hauteur_plateau = taille_case * cases_hauteur
-gravite = 1     # Intervalle de temps pour que la pièce tombe en secondes
+
+COULEUR_BG = "white"
+COULEUR_INVERSE_BG = "black" if COULEUR_BG == "white" else "white"
+COULEURS = ["pink", "#00CCFF", "yellow", "lime", "red", "orange", "dark blue"]      # Les couleurs des pièces
+        #     T   ,     I    ,    O    ,   S   ,   Z  ,     L   ,      J
 
 score = 0
 line_clears = 0
+
+gravite = 1     # Intervalle de temps pour que la pièce tombe en secondes
 
 
 def initialiser_interface() -> None :
     """Initialise l'interface."""
     cree_fenetre(longueur_plateau, hauteur_plateau)
 
-    # Fond d'écran
-    rectangle(0, 0, longueur_plateau, hauteur_plateau, "black", "black", tag="background")
+    # Background
+    rectangle(0, 0, longueur_plateau, hauteur_plateau, COULEUR_BG, COULEUR_BG, tag="bg")
 
 
+    # Encadré SCORE et le texte
+    rectangle(taille_case * cases_longueur * 1.1, 
+              taille_case * 1, 
+              taille_case * cases_longueur * 1.1 + taille_case * 5, 
+              taille_case * 4, 
+              COULEUR_INVERSE_BG, 
+              epaisseur=2, 
+              tag="encadre"
+              )
+    texte(13.5 * taille_case, 9/5 * taille_case, "SCORE", COULEUR_INVERSE_BG, "center", tag="SCORE")
+
+    
     # Encadré NEXT et le texte
     rectangle(taille_case * cases_longueur * 1.1, 
               taille_case * 5, 
               taille_case * cases_longueur * 1.1 + taille_case * 5, 
               taille_case * 9, 
-              "white", 
+              COULEUR_INVERSE_BG, 
               epaisseur=3, 
               tag="encadre"
               )
-    texte(13.5 * taille_case, 29/5 * taille_case, "NEXT", "white", "center", tag="NEXT")
+    texte(13.5 * taille_case, 29/5 * taille_case, "NEXT", COULEUR_INVERSE_BG, "center", tag="NEXT")
 
 
     # Zone de jeu
     for i in range(cases_longueur + 1) :
-        ligne(i * taille_case, 0, i * taille_case, hauteur_plateau, "gray", tag="bordure")
+        ligne(i * taille_case, 0, i * taille_case, hauteur_plateau, COULEUR_INVERSE_BG, tag="bordure")
     for i in range(cases_hauteur) :
-        ligne(0, i * taille_case, longueur_plateau / 1.7, i * taille_case, "gray", tag="bordure")
+        ligne(0, i * taille_case, longueur_plateau / 1.7, i * taille_case, COULEUR_INVERSE_BG, tag="bordure")
 
 
 def remplir_case(i: int, j: int, piece: str) -> None :
     """Colorie la case plateau[i][j] avec la couleur indiqué."""
     if piece == "T" :
-        couleur = "pink"
+        couleur = COULEURS[0]
     elif piece == "I" :
-        couleur = "#00CCFF"
+        couleur = COULEURS[1]
     elif piece == "O" :
-        couleur = "yellow"
+        couleur = COULEURS[2]
     elif piece == "S" :
-        couleur = "lime"
+        couleur = COULEURS[3]
     elif piece == "Z" :
-        couleur = "red"
+        couleur = COULEURS[4]
     elif piece == "L" :
-        couleur = "orange"
+        couleur = COULEURS[5]
     elif piece == "J" :
-        couleur = "dark blue"
-    rectangle(j * taille_case, i * taille_case, (j + 1) * taille_case, (i + 1) * taille_case, "gray", couleur, tag="piece")
+        couleur = COULEURS[6]
+    rectangle(j * taille_case, i * taille_case, (j + 1) * taille_case, (i + 1) * taille_case, COULEUR_INVERSE_BG, couleur, tag="piece")
 
 
 def affichage_plateau(plateau: list, lst: list, piece: str) -> None :
@@ -75,37 +93,50 @@ def affichage_plateau(plateau: list, lst: list, piece: str) -> None :
 def update_affichage(score: int, ligne: int, piece: str) -> None :
     """Rafraichis l'affichage du score, des lignes et de la pièce suivante."""
     efface("next")
-    if piece in ["T", "S", "Z", "J", "L"] :
-        for j in range(12, 15) :
-            if piece == "T" :
-                rectangle(j * taille_case + 1,  6.5 * taille_case + 1,  (j + 1) * taille_case - 1, 7.5 * taille_case - 1, "pink", "pink", tag="next")
-                if j == 13 :
-                    rectangle(j * taille_case + 1, 7.5 * taille_case + 1, (j + 1) * taille_case - 1, 8.5 * taille_case - 1, "pink", "pink", tag="next")
-            elif piece == "J" :
-                rectangle(j * taille_case + 1,  6.5 * taille_case + 1,  (j + 1) * taille_case - 1, 7.5 * taille_case - 1, "dark blue", "dark blue", tag="next")
-                if j == 14 :
-                    rectangle(j * taille_case + 1, 7.5 * taille_case + 1, (j + 1) * taille_case - 1, 8.5 * taille_case - 1, "dark blue", "dark blue", tag="next")
-            elif piece == "L" :
-                rectangle(j * taille_case + 1,  6.5 * taille_case + 1,  (j + 1) * taille_case - 1, 7.5 * taille_case - 1, "orange", "orange", tag="next")
-                if j == 12 :
-                    rectangle(j * taille_case + 1, 7.5 * taille_case + 1, (j + 1) * taille_case - 1, 8.5 * taille_case - 1, "orange", "orange", tag="next")
-            elif piece == "S" :
-                if j <= 13 :
-                    rectangle(j * taille_case + 1,  7.5 * taille_case + 1,  (j + 1) * taille_case - 1, 8.5 * taille_case - 1, "lime", "lime", tag="next")
-                if j >= 13 :
-                    rectangle(j * taille_case + 1, 6.5 * taille_case + 1, (j + 1) * taille_case - 1, 7.5 * taille_case - 1, "lime", "lime", tag="next")
-            elif piece == "Z" :
-                if j <= 13 :
-                    rectangle(j * taille_case + 1,  6.5 * taille_case + 1,  (j + 1) * taille_case - 1, 7.5 * taille_case - 1, "red", "red", tag="next")
-                if j >= 13 :
-                    rectangle(j * taille_case + 1, 7.5 * taille_case + 1, (j + 1) * taille_case - 1, 8.5 * taille_case - 1, "red", "red", tag="next")
-    elif piece == "I" :
+    efface("score")
+    if piece == "I" :
         for j in range(11, 15) :
-            rectangle((j + 0.5) * taille_case + 1,  6.5 * taille_case + 1,  (j + 1.5) * taille_case - 1, 7.5 * taille_case - 1, "#00CCFF", "#00CCFF", tag="next")
-    else :
+            rectangle((j + 0.5) * taille_case, 6.5 * taille_case, (j + 1.5) * taille_case, 7.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[1], tag="next")
+
+    elif piece == "O":
         for j in range(12, 14) :
             for i in range(6, 8) :
-                rectangle((j + 0.5) * taille_case + 1,  (i + 0.5) * taille_case + 1,  (j + 1.5) * taille_case - 1, (i + 1.5) * taille_case - 1, "yellow", "yellow", tag="next")
+                    rectangle((j + 0.5) * taille_case, (i + 0.5) * taille_case, (j + 1.5) * taille_case, (i + 1.5) * taille_case, COULEUR_INVERSE_BG, COULEURS[2], tag="next")
+
+    else :
+        for j in range(12, 15) :
+            if piece == "T" :
+                rectangle(j * taille_case, 6.5 * taille_case, (j + 1) * taille_case, 7.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[0], tag="next")
+                if j == 13 :
+                    rectangle(j * taille_case, 7.5 * taille_case, (j + 1) * taille_case, 8.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[0], tag="next")
+            
+            elif piece == "S" :
+                if j <= 13 :
+                    rectangle(j * taille_case, 7.5 * taille_case, (j + 1) * taille_case, 8.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[3], tag="next")
+                if j >= 13 :
+                    rectangle(j * taille_case, 6.5 * taille_case, (j + 1) * taille_case, 7.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[3], tag="next")
+            
+            elif piece == "Z" :
+                if j <= 13 :
+                    rectangle(j * taille_case, 6.5 * taille_case, (j + 1) * taille_case, 7.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[4], tag="next")
+                if j >= 13 :
+                    rectangle(j * taille_case, 7.5 * taille_case, (j + 1) * taille_case, 8.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[4], tag="next")
+            
+            elif piece == "L" :
+                rectangle(j * taille_case, 6.5 * taille_case, (j + 1) * taille_case, 7.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[5], tag="next")
+                if j == 12 :
+                    rectangle(j * taille_case, 7.5 * taille_case, (j + 1) * taille_case, 8.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[5], tag="next")
+            
+            elif piece == "J" :
+                rectangle(j * taille_case, 6.5 * taille_case, (j + 1) * taille_case, 7.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[6], tag="next")
+                if j == 14 :
+                    rectangle(j * taille_case, 7.5 * taille_case, (j + 1) * taille_case, 8.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[6], tag="next")
+
+    if score > 0 :
+        nb_zeros = 7 - round((math.log10(score))) if 7 - round((math.log10(score))) >= 0 else 0
+        texte(13.5 * taille_case, 16/5 * taille_case, "0" * nb_zeros + str(score), COULEUR_INVERSE_BG, "center", tag="score")
+    else :
+        texte(13.5 * taille_case, 16/5 * taille_case, "0000000", COULEUR_INVERSE_BG, "center", tag="score")
 
 
 def initialiser_matrice(n: int, p: int) -> list :
