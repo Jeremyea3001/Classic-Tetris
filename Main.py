@@ -1,29 +1,37 @@
 from fltk import *
 import time
 import random
+import math
 
+# Changeable values
 
-SAC = ["I", "T", "L", "J", "S", "Z", "O"]
 taille_case = 30
 cases_longueur = 10
 cases_hauteur = 24
+COULEUR_BG = "white"    # Can change this value to "black" instead for a black background
+gravite = 1     # Intervalle de temps pour que la pièce tombe en secondes
+RANDOM_BAGS = False         # This variable can take the values : True, False
+# It can either have the value False to have 7-bags or True for random bags.
+lockdelay = 1
+
+
+# Values to not change
+
 longueur_plateau = taille_case * cases_longueur * 1.7
 hauteur_plateau = taille_case * cases_hauteur
 
-COULEUR_BG = "white"
+SAC = ["I", "T", "L", "J", "S", "Z", "O"]
 COULEUR_INVERSE_BG = "black" if COULEUR_BG == "white" else "white"
-COULEURS = ["pink", "#00CCFF", "yellow", "lime", "red", "orange", "dark blue"]      # Les couleurs des pièces
+COULEURS = ["pink", "#00CCFF", "yellow", "lime", "red", "orange", "dark blue"]      # List of colors for the respective pieces below them
         #     T   ,     I    ,    O    ,   S   ,   Z  ,     L   ,      J
-
 score = 0
 line_clears = 0
-
-gravite = 1     # Intervalle de temps pour que la pièce tombe en secondes
 
 
 def initialiser_interface() -> None :
     """Initialise l'interface."""
     cree_fenetre(longueur_plateau, hauteur_plateau)
+
 
     # Background
     rectangle(0, 0, longueur_plateau, hauteur_plateau, COULEUR_BG, COULEUR_BG, tag="bg")
@@ -40,18 +48,22 @@ def initialiser_interface() -> None :
               )
     texte(13.5 * taille_case, 9/5 * taille_case, "SCORE", COULEUR_INVERSE_BG, "center", tag="SCORE")
 
-    
+
     # Encadré NEXT et le texte
     rectangle(taille_case * cases_longueur * 1.1, 
               taille_case * 5, 
               taille_case * cases_longueur * 1.1 + taille_case * 5, 
               taille_case * 9, 
               COULEUR_INVERSE_BG, 
-              epaisseur=3, 
+              epaisseur=2, 
               tag="encadre"
               )
     texte(13.5 * taille_case, 29/5 * taille_case, "NEXT", COULEUR_INVERSE_BG, "center", tag="NEXT")
 
+
+    # Texte lignes remplis
+    texte(13.5 * taille_case, hauteur_plateau - 13/5 * taille_case, "Lines cleared :", COULEUR_INVERSE_BG, "center", taille=18, tag="LIGNES")
+        
 
     # Zone de jeu
     for i in range(cases_longueur + 1) :
@@ -90,13 +102,16 @@ def affichage_plateau(plateau: list, lst: list, piece: str) -> None :
                 remplir_case(i, j, plateau[i][j])
 
 
-def update_affichage(score: int, ligne: int, piece: str) -> None :
+def update_affichage(score: int, lines: int, piece: str) -> None :
     """Rafraichis l'affichage du score, des lignes et de la pièce suivante."""
     efface("next")
     efface("score")
+    efface("lines")
+
+    # Rafraichissage de la prochaine pièce
     if piece == "I" :
         for j in range(11, 15) :
-            rectangle((j + 0.5) * taille_case, 6.5 * taille_case, (j + 1.5) * taille_case, 7.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[1], tag="next")
+            rectangle((j + 0.5) * taille_case, 7 * taille_case, (j + 1.5) * taille_case, 8 * taille_case, COULEUR_INVERSE_BG, COULEURS[1], tag="next")
 
     elif piece == "O":
         for j in range(12, 14) :
@@ -132,11 +147,15 @@ def update_affichage(score: int, ligne: int, piece: str) -> None :
                 if j == 14 :
                     rectangle(j * taille_case, 7.5 * taille_case, (j + 1) * taille_case, 8.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[6], tag="next")
 
+    # Rafraichissage du score
     if score > 0 :
         nb_zeros = 7 - round((math.log10(score))) if 7 - round((math.log10(score))) >= 0 else 0
-        texte(13.5 * taille_case, 16/5 * taille_case, "0" * nb_zeros + str(score), COULEUR_INVERSE_BG, "center", tag="score")
+        texte(13.5 * taille_case, 16/5 * taille_case, "0" * nb_zeros + str(round(score)), COULEUR_INVERSE_BG, "center", tag="score")
     else :
         texte(13.5 * taille_case, 16/5 * taille_case, "0000000", COULEUR_INVERSE_BG, "center", tag="score")
+
+    # Rafraichissage des lignes remplies
+    texte(13.5 * taille_case, hauteur_plateau - 7/5 * taille_case, str(lines), COULEUR_INVERSE_BG, "center", taille=18, tag="lines")
 
 
 def initialiser_matrice(n: int, p: int) -> list :
@@ -205,8 +224,10 @@ def deplacement_piece(plateau: list, lst: list, dir: str) -> list :
         return lst
     elif any(c >= cases_longueur - 1 or plateau[l][c + 1] != None for l, c in lst) and dir == "Right" :
         return lst
-    elif any(l >= cases_hauteur - 1 for l, c in lst) and dir == "Down" :
-        return lst
+    elif dir == "Down" :
+        if (any(l >= cases_hauteur - 1 for l, c in lst)
+         or any(plateau[l + 1][c] != None and (l + 1, c) not in lst for l, c in lst)) :
+            return lst
     
     for l, c in lst :
         if dir == "Left" :
@@ -218,16 +239,10 @@ def deplacement_piece(plateau: list, lst: list, dir: str) -> list :
     return lst_deplace
 
 
-def pose_piece(plateau: list, lst: list, piece: str) -> bool :
-    """Modifie le plateau si un bloc se trouve au dessus d'un autre bloc ou si un bloc se trouve tout en bas du plateau.
-       Renvoie True si le plateau est modifié et False dans le cas contraire."""
-    if any(l >= cases_hauteur - 1 for l, c in lst) :
-        for l, c in lst :
-            plateau[l][c] = piece
-        return True
-    elif any(plateau[l + 1][c] != None and (l + 1, c) not in lst for l, c in lst) :
-        for l, c in lst :
-            plateau[l][c] = piece
+def pose_piece(plateau: list, lst: list) -> bool :
+    """Renvoie True si la pièce doit être placé et False dans le cas contraire."""
+    if (any(l >= cases_hauteur - 1 for l, c in lst)
+     or any(plateau[l + 1][c] != None and (l + 1, c) not in lst for l, c in lst)) :
         return True
     return False
 
@@ -285,18 +300,28 @@ def rotation_piece(coord_piece: list, piece: str, dir: str) -> list :
 
 
 def rafraichir_plateau(plateau) -> int :
-    """Modifie le plateau si une ligne est remplie et renvoie True. Renvoie False dans le cas contraire."""
+    """Modifie le plateau si une ligne est remplie et renvoie le nombre de lignes remplies."""
     line_clears = 0
     for i in range(len(plateau)) :
         if all(_ != None for _ in plateau[i]) :
             line_clears += 1
             for j in range(len(plateau[i])) :
-                plateau[i][j] = False
+                plateau[i][j] = None
                 if any(plateau[i - k][j] != None for k in range(i)) :        # S'il y a aucun bloc au dessus de la ligne, ne pas déplacer les lignes au dessus
                     for k in range(i) :
                         plateau[i - k - 1][j], plateau[i - k][j] = plateau[i - k][j], plateau[i - k - 1][j]
     return line_clears
 
+
+def hard_drop(plateau: list, coord_cases: list, piece: str) -> float :
+    """Place la pièce le plus bas possible dans le plateau."""
+    i = 0
+    while not pose_piece(plateau, coord_cases) :
+        coord_cases = deplacement_piece(plateau, coord_cases, "Down")
+        i += 1/15
+    for l, c in coord_cases :
+        plateau[l][c] = piece
+    return i
 
 
 if __name__ == "__main__" :
@@ -305,58 +330,105 @@ if __name__ == "__main__" :
     initialiser_interface()
 
     plateau = initialiser_matrice(cases_hauteur, cases_longueur)
-    sac_en_cours = list(sac)
-    # sac_en_cours = ["I", "I", "I", "I", "O"]
-    piece = random.choice(sac_en_cours)
-    sac_en_cours.remove(piece)
-    next_piece = random.choice(sac_en_cours)
-    sac_en_cours.remove(next_piece)
+    if not RANDOM_BAGS :
+        sac_en_cours = list(SAC)
+        piece = random.choice(sac_en_cours)
+        sac_en_cours.remove(piece)
+        next_piece = random.choice(sac_en_cours)
+        sac_en_cours.remove(next_piece)
+    else :
+        piece = random.choice(SAC)
+        next_piece = random.choice(SAC)
     coord_cases = nouvelle_piece(plateau, piece)
-    affichage_plateau(plateau, coord_cases)
+    affichage_plateau(plateau, coord_cases, piece)
     update_affichage(score, line_clears, next_piece)
-    t1 = time.perf_counter()
-
+    tgrav1 = time.perf_counter()
+    active = False
+    
 
     while True:
         ev = donne_ev()
         tev = type_ev(ev)
 
         t2 = time.perf_counter()
-        if t2 - t1 >= gravite :
+        if t2 - tgrav1 >= gravite :
             coord_cases = deplacement_piece(plateau, coord_cases, "Down")
-            affichage_plateau(plateau, coord_cases)
-            t1 = t2
+            affichage_plateau(plateau, coord_cases, piece)
+            tgrav1 = t2
 
-        if pose_piece(plateau, coord_cases, piece) :
-            line_clears_at_once = rafraichir_plateau(plateau)
-            if line_clears_at_once == 1 :
-                score += 40
-            elif line_clears_at_once == 2 :
-                score += 100
-            elif line_clears_at_once == 3 :
-                score += 300
-            else :
-                score += 1200
-            line_clears += line_clears_at_once
-            piece, next_piece = next_piece, random.choice(sac_en_cours)
-            sac_en_cours.remove(next_piece)
-            if len(sac_en_cours) == 0 :
-                sac_en_cours = list(sac)
-            coord_cases = nouvelle_piece(plateau, piece)
-            if len(coord_cases) != 4 :
-                break
-            else :
-                affichage_plateau(plateau, coord_cases, piece)
-                update_affichage(score, line_clears, next_piece)
-    
+
+        if active :
+            if t2 - tlockdelay1 >= lockdelay :
+                if pose_piece(plateau, coord_cases) :
+                    for l, c in coord_cases :
+                        plateau[l][c] = piece
+                    line_clears_at_once = rafraichir_plateau(plateau)
+                    if line_clears_at_once == 1 :
+                        score += 40
+                    elif line_clears_at_once == 2 :
+                        score += 100
+                    elif line_clears_at_once == 3 :
+                        score += 300
+                    elif line_clears_at_once == 4 :
+                        score += 1200
+                    line_clears += line_clears_at_once
+                    if not RANDOM_BAGS :
+                        piece, next_piece = next_piece, random.choice(sac_en_cours)
+                        sac_en_cours.remove(next_piece)
+                        if len(sac_en_cours) == 0 :
+                            sac_en_cours = list(SAC)
+                    else :
+                        piece, next_piece = next_piece, random.choice(SAC)
+                    coord_cases = nouvelle_piece(plateau, piece)
+                    if len(coord_cases) != 4 :
+                        break
+                    else :
+                        affichage_plateau(plateau, coord_cases, piece)
+                        update_affichage(score, line_clears, next_piece)
+                    active = False
+        else :
+            if pose_piece(plateau, coord_cases) :
+                tlockdelay1 = time.perf_counter()
+                active = True
+
 
         if tev == "Touche" :
             nom_touche = touche(ev)
 
             if nom_touche in ["Left", "Right", "Down"] :
                 coord_cases = deplacement_piece(plateau, coord_cases, nom_touche)
+                if nom_touche == "Down" :
+                    score += 1/20
+                    update_affichage(score, line_clears, next_piece)
                 affichage_plateau(plateau, coord_cases, piece)
+            
+            elif nom_touche == "Up" :
+                score += hard_drop(plateau, coord_cases, piece)
+                line_clears_at_once = rafraichir_plateau(plateau)
+                if line_clears_at_once == 1 :
+                    score += 40
+                elif line_clears_at_once == 2 :
+                    score += 100
+                elif line_clears_at_once == 3 :
+                    score += 300
+                elif line_clears_at_once == 4 :
+                    score += 1200
+                line_clears += line_clears_at_once
+                if not RANDOM_BAGS :
+                    piece, next_piece = next_piece, random.choice(sac_en_cours)
+                    sac_en_cours.remove(next_piece)
+                    if len(sac_en_cours) == 0 :
+                        sac_en_cours = list(SAC)
+                else :
+                    piece, next_piece = next_piece, random.choice(SAC)
+                coord_cases = nouvelle_piece(plateau, piece)
+                if len(coord_cases) != 4 :
+                    break
+                else :
+                    affichage_plateau(plateau, coord_cases, piece)
+                    update_affichage(score, line_clears, next_piece)
 
+            
             elif nom_touche in ["a", "e"] :
                 if nom_touche == "a" :
                     coord_cases = rotation_piece(coord_cases, piece, "AntiClockwise")
