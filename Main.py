@@ -11,7 +11,7 @@ cases_longueur = 10
 cases_hauteur = 23
 niveau = 1
 COULEUR_BG = "white"    # Can change this value to "black" instead for a black background
-gravite = 1 - (niveau // 10) / 10     # Time before the piece falls one line in seconds
+gravite = 43/60     # Time before the piece falls one line in seconds
 RANDOM_BAGS = False         # This variable can take the values : True, False
 # The value False means 7-bags and True is for random bags.
 LOCKDELAY = 1
@@ -350,6 +350,24 @@ def hard_drop(plateau: list, piece: Piece) -> float :
     return i
 
 
+def update_gravity(level : int) -> float :
+    """Updates gravity according to the level."""
+    if level >= 29 :
+        x = 1
+    elif level >= 19 :
+        x = 2
+    elif level >= 16 :
+        x = 3
+    elif level >= 13 :
+        x = 4
+    elif level >= 10 :
+        x = 5
+    elif level == 9 :
+        x = 6
+    else :
+        x = (8 - level) * 5 + 8
+    return x / 60
+
 if __name__ == "__main__" :
 
 
@@ -400,10 +418,7 @@ if __name__ == "__main__" :
                     line_clears += line_clears_at_once
                     if line_clears // (niveau * 10) > 0 :
                         niveau += 1
-                        if niveau // 100 > 0 :
-                            gravite = 0.1 - (niveau // 100) / 100
-                        elif niveau // 10 > 0 :
-                            gravite = 1 - (niveau // 10) / 10
+                        gravite = update_gravity(niveau)
 
                     if not RANDOM_BAGS :
                         piece, next_piece = Piece(next_piece), random.choice(sac_en_cours)
@@ -449,10 +464,7 @@ if __name__ == "__main__" :
                 line_clears += line_clears_at_once
                 if line_clears // (niveau * 10) > 0 :
                     niveau += 1
-                    if niveau // 100 > 0 :
-                        gravite = 0.1 - (niveau // 100) / 100
-                    elif niveau // 10 > 0 :
-                        gravite = 1 - (niveau // 10) / 10
+                    gravite = update_gravity(niveau)
 
                 if not RANDOM_BAGS :
                     piece, next_piece = Piece(next_piece), random.choice(sac_en_cours)
@@ -466,6 +478,7 @@ if __name__ == "__main__" :
                 else :
                     affichage_plateau(plateau, piece)
                     update_affichage(score, line_clears, next_piece)
+                active = False
 
             
             elif nom_touche in ["a", "e"] :
