@@ -1,4 +1,5 @@
 Ce projet est purement personnel (aucun lien avec les projets académiques à part la bibliothèque utilisée).
+
 Comme le nom du projet l'indique, ce projet est une reproduction de Tetris Classique (ou NES Tetris). 
 Certaines fonctionnalités qui ne sont pas dans le jeu de base sont inclus dans ce programme :
 - Hard drop (HD) : une fonctionnalité qui permet de immédiatement placer la pièce tout en bas du plateau et donne plus de score comparé au Soft drop (SD)
