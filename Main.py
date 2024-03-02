@@ -1,44 +1,46 @@
-from fltk import *
-import time
-import random
-import math
-from Rotation import rotation
-
-
-# -------------------------------------------------------------------------------------------------------------------
 
 
 # Les valeurs qui peuvent être changé
 
 
-taille_case = 30        # Valeur minimale : 1
+taille_case = 30         # Valeur minimale : 1
 # Taille des cases en pixels
 
 cases_longueur = 10      # Valeur minimale : 4
 # Nombre de cases en longueur (sur l'axe des abscisses)
 
-cases_hauteur = 23      # Valeur minimale : 4
+cases_hauteur = 23       # Valeur minimale : 4
 # Nombre de cases en hauteur (sur l'axe des ordonnée)
 
-niveau = 1
+niveau = 1               # Valeur minimale : 1
 # Niveau initiale
 
-COULEUR_BG = "white"    # Valeurs possibles : "black", "white"
+COULEUR_BG = "black"     # Valeurs possibles : "black", "white"
 # Couleur du fond d'écran
 
-RANDOM_BAGS = False     # Valeurs possibles : True, False
+RANDOM_BAGS = False      # Valeurs possibles : True, False
 # False donne le système de 7-bag (plus de précisions sur Github)
 # True donne des pièces de manière totalement aléatoire
 
-LOCKDELAY = 1           # Valeur minimale : 0
+LOCKDELAY = 1            # Valeur minimale : 0
 # Temps (en seconde) avant qu'une pièce est posé après qu'il entre en contact avec un obstacles (en dessous de lui)
 
-SD_SCORE = 1/20         # Valeur minimale : 0
+SD_SCORE = 1/20          # Valeur minimale : 0
 # Nombre de score à chaque fois qu'un déplacement vers le bas est fait (avec la flèche du bas)
 # La gravité ne donne pas ce score
 
-HD_SCORE = 1/15         # Valeur minimale : SD_SCORE
+HD_SCORE = 1/15          # Valeur minimale : SD_SCORE
 # Nombre de score par déplacement vers le bas en utilisant le Hard Drop (avec la flèche du haut)
+
+
+# -------------------------------------------------------------------------------------------------------------------
+
+
+from fltk import *
+import time
+import random
+import math
+from Rotation import rotation
 
 
 # -------------------------------------------------------------------------------------------------------------------
@@ -258,9 +260,6 @@ def nouvelle_piece(piece: str) -> list :
 
 def initialiser_interface() -> None :
     """Initialise l'interface."""
-    assert taille_case >= 1
-    assert cases_hauteur >= 4
-    assert cases_longueur >= 4
 
     cree_fenetre(longueur_fenetre, hauteur_fenetre)
 
@@ -447,40 +446,97 @@ def update_gravity(level : int) -> float :
 if __name__ == "__main__" :
 
 
-    initialiser_interface()
+    try :
 
-    plateau = [[None for _ in range(cases_longueur)] for __ in range(cases_hauteur)]
-    if not RANDOM_BAGS :
-        sac_en_cours = list(SAC)
-        piece = Piece(random.choice(sac_en_cours))
-        sac_en_cours.remove(piece.nom_piece)
-        next_piece = random.choice(sac_en_cours)
-        sac_en_cours.remove(next_piece)
-    else :
-        piece = Piece(random.choice(SAC))
-        next_piece = random.choice(SAC)
-    affichage_plateau(plateau, piece)
-    update_affichage(score, line_clears, next_piece)
-    tgrav1 = time.perf_counter()
-    active = False
-    
+        assert (COULEUR_BG in ["white", "black"]
+            and niveau > 0
+            and HD_SCORE >=SD_SCORE
+            and LOCKDELAY >= 0
+            and type(RANDOM_BAGS) == bool
+            and taille_case >= 1
+            and cases_hauteur >= 4
+            and cases_longueur >= 4)
+        
+        initialiser_interface()
 
-    while True:
-        ev = donne_ev()
-        tev = type_ev(ev)
+        plateau = [[None for _ in range(cases_longueur)] for __ in range(cases_hauteur)]
+        if not RANDOM_BAGS :
+            sac_en_cours = list(SAC)
+            piece = Piece(random.choice(sac_en_cours))
+            sac_en_cours.remove(piece.nom_piece)
+            next_piece = random.choice(sac_en_cours)
+            sac_en_cours.remove(next_piece)
+        else :
+            piece = Piece(random.choice(SAC))
+            next_piece = random.choice(SAC)
+        affichage_plateau(plateau, piece)
+        update_affichage(score, line_clears, next_piece)
+        tgrav1 = time.perf_counter()
+        active = False
+        
 
-        t2 = time.perf_counter()
-        if t2 - tgrav1 >= gravite :
-            piece.deplacement("Down")
-            affichage_plateau(plateau, piece)
-            tgrav1 = t2
+        while True:
+            ev = donne_ev()
+            tev = type_ev(ev)
+
+            t2 = time.perf_counter()
+            if t2 - tgrav1 >= gravite :
+                piece.deplacement("Down")
+                affichage_plateau(plateau, piece)
+                tgrav1 = t2
 
 
-        if active :
-            if t2 - tlockdelay1 >= LOCKDELAY :
+            if active :
+                if t2 - tlockdelay1 >= LOCKDELAY :
+                    if pose_piece(plateau, piece.coord_cases) :
+                        for l, c in piece.coord_cases :
+                            plateau[l][c] = piece.nom_piece
+
+                        line_clears_at_once = rafraichir_plateau(plateau)
+                        if line_clears_at_once == 1 :
+                            score += 40
+                        elif line_clears_at_once == 2 :
+                            score += 100
+                        elif line_clears_at_once == 3 :
+                            score += 300
+                        elif line_clears_at_once == 4 :
+                            score += 1200
+                        line_clears += line_clears_at_once
+                        if line_clears // (niveau * 10) > 0 :
+                            niveau += 1
+                            gravite = update_gravity(niveau)
+
+                        if not RANDOM_BAGS :
+                            piece, next_piece = Piece(next_piece), random.choice(sac_en_cours)
+                            sac_en_cours.remove(next_piece)
+                            if len(sac_en_cours) == 0 :
+                                sac_en_cours = list(SAC)
+                        else :
+                            piece, next_piece = Piece(next_piece), random.choice(SAC)
+                        if not piece.coord_cases :
+                            break
+                        else :
+                            affichage_plateau(plateau, piece)
+                            update_affichage(score, line_clears, next_piece)
+                        active = False
+            else :
                 if pose_piece(plateau, piece.coord_cases) :
-                    for l, c in piece.coord_cases :
-                        plateau[l][c] = piece.nom_piece
+                    tlockdelay1 = time.perf_counter()
+                    active = True
+
+
+            if tev == "Touche" :
+                nom_touche = touche(ev)
+
+                if nom_touche in ["Left", "Right", "Down"] :
+                    piece.deplacement(nom_touche)
+                    if nom_touche == "Down" :
+                        score += SD_SCORE
+                        update_affichage(score, line_clears, next_piece)
+                    affichage_plateau(plateau, piece)
+                
+                elif nom_touche == "Up" :
+                    score += hard_drop(plateau, piece)
 
                     line_clears_at_once = rafraichir_plateau(plateau)
                     if line_clears_at_once == 1 :
@@ -509,64 +565,26 @@ if __name__ == "__main__" :
                         affichage_plateau(plateau, piece)
                         update_affichage(score, line_clears, next_piece)
                     active = False
-        else :
-            if pose_piece(plateau, piece.coord_cases) :
-                tlockdelay1 = time.perf_counter()
-                active = True
 
-
-        if tev == "Touche" :
-            nom_touche = touche(ev)
-
-            if nom_touche in ["Left", "Right", "Down"] :
-                piece.deplacement(nom_touche)
-                if nom_touche == "Down" :
-                    score += SD_SCORE
-                    update_affichage(score, line_clears, next_piece)
-                affichage_plateau(plateau, piece)
-            
-            elif nom_touche == "Up" :
-                score += hard_drop(plateau, piece)
-
-                line_clears_at_once = rafraichir_plateau(plateau)
-                if line_clears_at_once == 1 :
-                    score += 40
-                elif line_clears_at_once == 2 :
-                    score += 100
-                elif line_clears_at_once == 3 :
-                    score += 300
-                elif line_clears_at_once == 4 :
-                    score += 1200
-                line_clears += line_clears_at_once
-                if line_clears // (niveau * 10) > 0 :
-                    niveau += 1
-                    gravite = update_gravity(niveau)
-
-                if not RANDOM_BAGS :
-                    piece, next_piece = Piece(next_piece), random.choice(sac_en_cours)
-                    sac_en_cours.remove(next_piece)
-                    if len(sac_en_cours) == 0 :
-                        sac_en_cours = list(SAC)
-                else :
-                    piece, next_piece = Piece(next_piece), random.choice(SAC)
-                if not piece.coord_cases :
-                    break
-                else :
+                
+                elif nom_touche in ["a", "e"] :
+                    if nom_touche == "a" :
+                        piece.rotation_SRS("AntiClockwise")
+                    else :
+                        piece.rotation_SRS("Clockwise")
                     affichage_plateau(plateau, piece)
-                    update_affichage(score, line_clears, next_piece)
-                active = False
-
-            
-            elif nom_touche in ["a", "e"] :
-                if nom_touche == "a" :
-                    piece.rotation_SRS("AntiClockwise")
-                else :
-                    piece.rotation_SRS("Clockwise")
-                affichage_plateau(plateau, piece)
 
 
-        if tev == "Quitte" :
-            break
-        mise_a_jour()
+            if tev == "Quitte" :
+                break
+            mise_a_jour()
 
-    ferme_fenetre()
+        ferme_fenetre()
+    
+    except AssertionError:
+        print("""
+Des valeurs changeables ont un format incorrecte.\n
+        Elles ne respectent pas :
+        \t - Les valeurs minimales, ou
+        \t - Les valeurs imposées
+""")
