@@ -4,63 +4,115 @@ import random
 import math
 from Rotation import rotation
 
-# Changeable values
 
-taille_case = 30
-cases_longueur = 10
-cases_hauteur = 23
+# -------------------------------------------------------------------------------------------------------------------
+
+
+# Les valeurs qui peuvent être changé
+
+
+taille_case = 30        # Valeur minimale : 1
+# Taille des cases en pixels
+
+cases_longueur = 10      # Valeur minimale : 4
+# Nombre de cases en longueur (sur l'axe des abscisses)
+
+cases_hauteur = 23      # Valeur minimale : 4
+# Nombre de cases en hauteur (sur l'axe des ordonnée)
+
 niveau = 1
-COULEUR_BG = "white"    # Can change this value to "black" instead for a black background
-gravite = 43/60     # Time before the piece falls one line in seconds
-RANDOM_BAGS = False         # This variable can take the values : True, False
-# The value False means 7-bags and True is for random bags.
-LOCKDELAY = 1
-SD_SCORE = 1/20
-HD_SCORE = 1/15
+# Niveau initiale
+
+COULEUR_BG = "white"    # Valeurs possibles : "black", "white"
+# Couleur du fond d'écran
+
+RANDOM_BAGS = False     # Valeurs possibles : True, False
+# False donne le système de 7-bag (plus de précisions sur Github)
+# True donne des pièces de manière totalement aléatoire
+
+LOCKDELAY = 1           # Valeur minimale : 0
+# Temps (en seconde) avant qu'une pièce est posé après qu'il entre en contact avec un obstacles (en dessous de lui)
+
+SD_SCORE = 1/20         # Valeur minimale : 0
+# Nombre de score à chaque fois qu'un déplacement vers le bas est fait (avec la flèche du bas)
+# La gravité ne donne pas ce score
+
+HD_SCORE = 1/15         # Valeur minimale : SD_SCORE
+# Nombre de score par déplacement vers le bas en utilisant le Hard Drop (avec la flèche du haut)
 
 
-# Values to not change
+# -------------------------------------------------------------------------------------------------------------------
 
-longueur_plateau = taille_case * cases_longueur * 1.7
-hauteur_plateau = taille_case * cases_hauteur
+
+# Valeurs à ne pas changer
+
+
+longueur_fenetre = taille_case * cases_longueur * 1.7
+hauteur_fenetre = taille_case * cases_hauteur
+# Taille de la fenêtre en pixels
+
+gravite = 43/60
+# Temps avant qu'une pièce tombe d'une ligne
 
 SAC = ["I", "T", "L", "J", "S", "Z", "O"]
+# Les pièces dans un sac
+
 COULEUR_INVERSE_BG = "black" if COULEUR_BG == "white" else "white"
-COULEURS = ["pink", "#00CCFF", "yellow", "lime", "red", "orange", "dark blue"]      # List of colors for the respective pieces below them
+# Couleur inverse du fond d'écran
+
+COULEURS = ["pink", "#00CCFF", "yellow", "lime", "red", "orange", "dark blue"]
         #     T   ,     I    ,    O    ,   S   ,   Z  ,     L   ,      J
+# Liste des couleurs des pièces avec leur pièce respective en dessous
+
 score = 0
 line_clears = 0
+
+
+# -------------------------------------------------------------------------------------------------------------------
 
 
 class Piece :
 
     def __init__(self, nom_piece: str):
+        """Initialisation de la pièce"""
         self.nom_piece = nom_piece
+        # Nom de la pièce
+
         self.coord_cases = nouvelle_piece(self.nom_piece)
+        # Coordonnées des cases de la pièce
+
         self.etat = 0
-        
+        # Etat de la pièce (orientation)
+
     
     def rotation(self, dir: str) -> None :
         """Modifie les coordonnées de piece avec la rotation normale dir s'il n'y a aucun obstacles."""
 
-        if self.nom_piece == "O" :
+        if self.nom_piece == "O" :      # Si la pièce est le O, ne pas faire de rotation
             return None
 
         lst = rotation(self.coord_cases, self.nom_piece, dir)
+        # Algorithme pour appliquer une rotation dans un sens
 
         if all(0 <= e[1] <= cases_longueur - 1 and 0 <= e[0] <= cases_hauteur - 1 for e in lst) :
+        # Si une coordonnée n'est pas dans la matrice, ne pas exécuter la prochaine condition
+            
             if all(plateau[i][j] == None for i, j in lst) :
+            # Si un couple coordonnées a un obstacle dans le plateau, ne pas changer les coordonnées de la pièce
                 self.coord_cases = lst
 
 
     def rotation_SRS(self, dir: str) -> None :
         """Modifie les coordonnées de piece avec la rotation SRS dans la direction dir."""
 
-        if self.nom_piece == "O" :
+        if self.nom_piece == "O" :      # Même condition que pour rotation
             return None
 
-        tests = [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]]
+        tests = [(0, 0), (-1, 0), (-1, -1), (0, 2), (-1, 2)]        # N.B. : Les coordonnées y de ces couples sont le contraire car 
+        # Liste de tests, pour savoir si une de ces positions sont possibles
+        # Pour plus d'informations sur ces tests, voir Github
 
+        # En fonction de l'état de la pièce et de la direction de la rotation, le signe des tests diffèrent
         if self.etat == 0 :
             if dir == "Clockwise" :
                 x = 1
@@ -81,22 +133,26 @@ class Piece :
             y = -1
 
 
-        for test in tests :
-            test[0] *= x
-            test[1] *= y
-
         lst = rotation(self.coord_cases, self.nom_piece, dir)
+        # Même algorithme utilisé que dans la précédente méthode
 
         for test in tests :
-            if all(0 <= e[1] + test[1] <= cases_longueur - 1 and 0 <= e[0] + test[0] <= cases_hauteur - 1 for e in lst) :
-                if all(plateau[e[0] + test[0]][e[1] + test[1]] == None for e in lst) :
+            if all(0 <= e[1] + test[1] * y <= cases_longueur - 1 and 0 <= e[0] + test[0] * x <= cases_hauteur - 1 for e in lst) :
+                if all(plateau[e[0] + test[0] * x][e[1] + test[1] * y] == None for e in lst) :
+                # Mêmes tests que la précédente méthode
+                    
                     for e in lst :
-                        e[0] += test[0]
-                        e[1] += test[1]
+                        e[0] += test[0] * x
+                        e[1] += test[1] * y
+                    # Modification des coordonnées dans lst
+                        
                     self.coord_cases = lst
                     break
 
 
+        # En fonction de la direction de la rotation, l'état change :
+        # Si la rotation est dans le sens de l'aiguille d'une montre, ajouter 1 à l'état
+        # Sinon, soustraire 1
         if dir == "Clockwise" :
             if self.etat == 3 :
                 self.etat = 0
@@ -110,23 +166,33 @@ class Piece :
                 self.etat -= 1
         
 
+# -------------------------------------------------------------------------------------------------------------------
 
 
     def deplacement(self, dir: str) -> None :
         """Effectue le déplacement dans la direction indiquée."""
         if all(e[1] > 0 for e in self.coord_cases) and dir == "Left" :
+        # Si une coordonnée est déjà à l'extrémité et que le déplacement est vers la gauche,
+        # Ne pas effectuer le déplacement
+            
             if all(plateau[e[0]][e[1] - 1] == None for e in self.coord_cases) :
+            # S'il y a un obstacle aux coordonnées après le déplacement,
+            # Ne pas effectuer le déplacement
 
                 for e in self.coord_cases :
-                        e[1] -= 1
+                    e[1] -= 1
 
         elif all(e[1] < cases_longueur - 1 for e in self.coord_cases) and dir == "Right" :
+        # Idem que pour le premier bloc
+            
             if all(plateau[e[0]][e[1] + 1] == None for e in self.coord_cases) :
 
                 for e in self.coord_cases :
                     e[1] += 1
 
         elif all(e[0] < cases_hauteur - 1 for e in self.coord_cases) and dir == "Down" :
+        # Idem que pour les 2 premiers blocs
+            
             if all(plateau[e[0] + 1][e[1]] == None or [e[0] + 1, e[1]] in self.coord_cases for e in self.coord_cases) :
             
                 for e in self.coord_cases :
@@ -136,18 +202,21 @@ class Piece :
 def nouvelle_piece(piece: str) -> list :
     """Renvoie une liste de 4 couples de coordonnées s'il n'y a pas d'obstacles."""
     lst = []
+
     if piece == "I" :
         for i in range(-2, 2) :
             if plateau[0][i + cases_longueur // 2] != None :
                 return False
             lst.append([0, i + cases_longueur // 2])
     
+
     elif piece == "O" :
         for i in range(2) :
             for j in range(-1, 1) :
                 if plateau[i][cases_longueur // 2 + j] != None :
                     return False
                 lst.append([i, j + cases_longueur // 2])
+
 
     elif piece in ["T", "L", "J"] :
         for i in range(-1, 2) :
@@ -189,11 +258,15 @@ def nouvelle_piece(piece: str) -> list :
 
 def initialiser_interface() -> None :
     """Initialise l'interface."""
-    cree_fenetre(longueur_plateau, hauteur_plateau)
+    assert taille_case >= 1
+    assert cases_hauteur >= 4
+    assert cases_longueur >= 4
+
+    cree_fenetre(longueur_fenetre, hauteur_fenetre)
 
 
     # Background
-    rectangle(0, 0, longueur_plateau, hauteur_plateau, COULEUR_BG, COULEUR_BG, tag="bg")
+    rectangle(0, 0, longueur_fenetre, hauteur_fenetre, COULEUR_BG, COULEUR_BG, tag="bg")
 
 
     # Encadré SCORE et le texte
@@ -221,18 +294,18 @@ def initialiser_interface() -> None :
 
 
     # Texte lignes remplis
-    texte(13.5 * taille_case, hauteur_plateau - 13/5 * taille_case, "Lines cleared :", COULEUR_INVERSE_BG, "center", taille=18, tag="LIGNES")
+    texte(13.5 * taille_case, hauteur_fenetre - 13/5 * taille_case, "Lines cleared :", COULEUR_INVERSE_BG, "center", taille=18, tag="LIGNES")
         
 
     # Zone de jeu
     for i in range(cases_longueur + 1) :
-        ligne(i * taille_case, 0, i * taille_case, hauteur_plateau, COULEUR_INVERSE_BG, tag="bordure")
+        ligne(i * taille_case, 0, i * taille_case, hauteur_fenetre, COULEUR_INVERSE_BG, tag="bordure")
     for i in range(cases_hauteur) :
-        ligne(0, i * taille_case, longueur_plateau / 1.7, i * taille_case, COULEUR_INVERSE_BG, tag="bordure")
+        ligne(0, i * taille_case, longueur_fenetre / 1.7, i * taille_case, COULEUR_INVERSE_BG, tag="bordure")
 
 
 def remplir_case(i: int, j: int, piece: str) -> None :
-    """Colorie la case plateau[i][j] avec la couleur indiqué."""
+    """Colorie la case plateau[i][j] avec la couleur de la pièce correspondante."""
     if piece == "T" :
         couleur = COULEURS[0]
     elif piece == "I" :
@@ -314,7 +387,7 @@ def update_affichage(score: int, lines: int, piece: str) -> None :
         texte(13.5 * taille_case, 16/5 * taille_case, "0000000", COULEUR_INVERSE_BG, "center", tag="score")
 
     # Rafraichissage des lignes remplies
-    texte(13.5 * taille_case, hauteur_plateau - 7/5 * taille_case, str(lines), COULEUR_INVERSE_BG, "center", taille=18, tag="lines")
+    texte(13.5 * taille_case, hauteur_fenetre - 7/5 * taille_case, str(lines), COULEUR_INVERSE_BG, "center", taille=18, tag="lines")
 
 
 def pose_piece(plateau: list, lst: list) -> bool :
@@ -329,11 +402,13 @@ def rafraichir_plateau(plateau) -> int :
     """Modifie le plateau si une ligne est remplie et renvoie le nombre de lignes remplies."""
     line_clears = 0
     for i in range(len(plateau)) :
-        if all(_ != None for _ in plateau[i]) :
+        if all(e != None for e in plateau[i]) :
             line_clears += 1
             for j in range(len(plateau[i])) :
                 plateau[i][j] = None
-                if any(plateau[i - k][j] != None for k in range(i)) :        # S'il y a aucun bloc au dessus de la ligne, ne pas déplacer les lignes au dessus
+                if any(plateau[i - k][j] != None for k in range(i)) :
+                # S'il y a aucun bloc au dessus de la ligne, ne pas déplacer les lignes au dessus
+                    
                     for k in range(i) :
                         plateau[i - k - 1][j], plateau[i - k][j] = plateau[i - k][j], plateau[i - k - 1][j]
     return line_clears
@@ -351,7 +426,7 @@ def hard_drop(plateau: list, piece: Piece) -> float :
 
 
 def update_gravity(level : int) -> float :
-    """Updates gravity according to the level."""
+    """Donne la gravité correspondante au niveau donné."""
     if level >= 29 :
         x = 1
     elif level >= 19 :
@@ -368,12 +443,13 @@ def update_gravity(level : int) -> float :
         x = (8 - level) * 5 + 8
     return x / 60
 
+
 if __name__ == "__main__" :
 
 
     initialiser_interface()
 
-    plateau = [[None for _ in range(cases_longueur)] for j in range(cases_hauteur)]
+    plateau = [[None for _ in range(cases_longueur)] for __ in range(cases_hauteur)]
     if not RANDOM_BAGS :
         sac_en_cours = list(SAC)
         piece = Piece(random.choice(sac_en_cours))
