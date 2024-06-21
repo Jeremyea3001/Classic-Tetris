@@ -108,29 +108,29 @@ class Piece :
         if self.nom_piece == "O" :      # Même condition que pour rotation
             return None
 
-        tests = [(0, 0), (-1, 0), (-1, -1), (0, 2), (-1, 2)]        # N.B. : Les coordonnées y de ces couples sont le contraire car 
+        tests = [(0, 0), (0, -1), (-1, -1), (2, 0), (2, -1)]        # N.B. : Les coordonnées y de ces couples sont le contraire car 
         # Liste de tests, pour savoir si une de ces positions sont possibles
         # Pour plus d'informations sur ces tests, voir Github
 
         # En fonction de l'état de la pièce et de la direction de la rotation, le signe des tests diffèrent
         if self.etat == 0 :
             if dir == "Clockwise" :
-                x = 1
+                y = 1
             else :
-                x = -1
-            y = 1
+                y = -1
+            x = 1
         elif self.etat == 1 :
-            x = -1
             y = -1
+            x = -1
         elif self.etat == 2 :
             if dir == "Clockwise" :
-                x = -1
+                y = -1
             else :
-                x = 1
-            y = 1
-        elif self.etat == 3 :
+                y = 1
             x = 1
-            y = -1
+        elif self.etat == 3 :
+            y = 1
+            x = -1
 
 
         lst = rotation(self.coord_cases, self.nom_piece, dir)

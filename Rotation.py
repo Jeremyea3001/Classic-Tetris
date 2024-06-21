@@ -2,12 +2,12 @@ def creation_lst_modifie(lst_coords: list, piece: str) -> tuple :
     """Renvoie la liste modifié avec comme origine le deuxième ou troisième point de la liste."""
     lst_modifie = list()
 
-    if piece in ["I", "Z", "L"] :
+    if piece in ["I", "L"] :
         for x, y in lst_coords :
             lst_modifie.append((x - lst_coords[1][0], y - lst_coords[1][1]))
             origine = lst_coords[1]
 
-    elif piece in ["T", "S", "J"] :
+    elif piece in ["T", "S", "J", "Z"] :
         for x, y in lst_coords :
             lst_modifie.append((x - lst_coords[2][0], y - lst_coords[2][1]))
             origine = lst_coords[2]
