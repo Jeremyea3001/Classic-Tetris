@@ -1,5 +1,3 @@
-
-
 # Les valeurs qui peuvent être changé
 
 
@@ -99,7 +97,7 @@ class Piece :
         if all(0 <= e[1] <= cases_longueur - 1 and 0 <= e[0] <= cases_hauteur - 1 for e in lst) :
         # Si une coordonnée n'est pas dans la matrice, ne pas exécuter la prochaine condition
             
-            if all(plateau[i][j] == None for i, j in lst) :
+            if all(plateau[i][j] is None for i, j in lst) :
             # Si un couple coordonnées a un obstacle dans le plateau, ne pas changer les coordonnées de la pièce
                 self.coord_cases = lst
 
@@ -140,7 +138,7 @@ class Piece :
 
         for test in tests :
             if all(0 <= e[1] + test[1] * y <= cases_longueur - 1 and 0 <= e[0] + test[0] * x <= cases_hauteur - 1 for e in lst) :
-                if all(plateau[e[0] + test[0] * x][e[1] + test[1] * y] == None for e in lst) :
+                if all(plateau[e[0] + test[0] * x][e[1] + test[1] * y] is None for e in lst) :
                 # Mêmes tests que la précédente méthode
                     
                     for e in lst :
@@ -149,23 +147,23 @@ class Piece :
                     # Modification des coordonnées dans lst
                         
                     self.coord_cases = lst
+
+                    # En fonction de la direction de la rotation, l'état change :
+                    # Si la rotation est dans le sens de l'aiguille d'une montre, ajouter 1 à l'état
+                    # Sinon, soustraire 1
+                    if dir == "Clockwise" :
+                        if self.etat == 3 :
+                            self.etat = 0
+                        else :
+                            self.etat += 1
+                    
+                    else :
+                        if self.etat == 0 :
+                            self.etat = 3
+                        else :
+                            self.etat -= 1
+
                     break
-
-
-        # En fonction de la direction de la rotation, l'état change :
-        # Si la rotation est dans le sens de l'aiguille d'une montre, ajouter 1 à l'état
-        # Sinon, soustraire 1
-        if dir == "Clockwise" :
-            if self.etat == 3 :
-                self.etat = 0
-            else :
-                self.etat += 1
-        
-        else :
-            if self.etat == 0 :
-                self.etat = 3
-            else :
-                self.etat -= 1
         
 
 # -------------------------------------------------------------------------------------------------------------------
@@ -177,7 +175,7 @@ class Piece :
         # Si une coordonnée est déjà à l'extrémité et que le déplacement est vers la gauche,
         # Ne pas effectuer le déplacement
             
-            if all(plateau[e[0]][e[1] - 1] == None for e in self.coord_cases) :
+            if all(plateau[e[0]][e[1] - 1] is None for e in self.coord_cases) :
             # S'il y a un obstacle aux coordonnées après le déplacement,
             # Ne pas effectuer le déplacement
 
@@ -187,7 +185,7 @@ class Piece :
         elif all(e[1] < cases_longueur - 1 for e in self.coord_cases) and dir == "Right" :
         # Idem que pour le premier bloc
             
-            if all(plateau[e[0]][e[1] + 1] == None for e in self.coord_cases) :
+            if all(plateau[e[0]][e[1] + 1] is None for e in self.coord_cases) :
 
                 for e in self.coord_cases :
                     e[1] += 1
@@ -195,7 +193,7 @@ class Piece :
         elif all(e[0] < cases_hauteur - 1 for e in self.coord_cases) and dir == "Down" :
         # Idem que pour les 2 premiers blocs
             
-            if all(plateau[e[0] + 1][e[1]] == None or [e[0] + 1, e[1]] in self.coord_cases for e in self.coord_cases) :
+            if all(plateau[e[0] + 1][e[1]] is None or [e[0] + 1, e[1]] in self.coord_cases for e in self.coord_cases) :
             
                 for e in self.coord_cases :
                     e[0] += 1
