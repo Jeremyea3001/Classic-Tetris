@@ -1,5 +1,6 @@
-1. Add a level display
-2. 
+1. Add a hold piece
+2. Add a next piece queue
+3. Add a level display
 
 
-Bugs : SRS rotation doesn't fully work
+Bugs : Fix the I piece's rotation
