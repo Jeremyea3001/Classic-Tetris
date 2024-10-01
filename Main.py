@@ -108,7 +108,7 @@ class Piece :
         if self.nom_piece == "O" :      # Même condition que pour rotation
             return None
 
-        tests = [(0, 0), (0, -1), (-1, -1), (2, 0), (2, -1)]        # N.B. : Les coordonnées y de ces couples sont le contraire car 
+        tests = [(0, 0), (0, -1), (-1, -1), (2, 0), (2, -1)]
         # Liste de tests, pour savoir si une de ces positions sont possibles
         # Pour plus d'informations sur ces tests, voir Github
 
@@ -290,6 +290,18 @@ def initialiser_interface() -> None :
     texte(13.5 * taille_case, 29/5 * taille_case, "NEXT", COULEUR_INVERSE_BG, "center", tag="NEXT")
 
 
+    # Encadré HOLD et le texte
+    rectangle(taille_case * cases_longueur * 1.1, 
+              taille_case * 10, 
+              taille_case * cases_longueur * 1.1 + taille_case * 5, 
+              taille_case * 14, 
+              COULEUR_INVERSE_BG, 
+              epaisseur=2, 
+              tag="encadre"
+              )
+    texte(13.5 * taille_case, 54/5 * taille_case, "HOLD", COULEUR_INVERSE_BG, "center", tag="NEXT")
+
+
     # Texte lignes remplis
     texte(13.5 * taille_case, hauteur_fenetre - 13/5 * taille_case, "Lines cleared :", COULEUR_INVERSE_BG, "center", taille=18, tag="LIGNES")
         
@@ -336,6 +348,7 @@ def update_affichage(score: int, lines: int, piece: str) -> None :
     efface("next")
     efface("score")
     efface("lines")
+    efface("hold")
 
     # Rafraichissage de la prochaine pièce
     if piece == "I" :
@@ -385,6 +398,46 @@ def update_affichage(score: int, lines: int, piece: str) -> None :
 
     # Rafraichissage des lignes remplies
     texte(13.5 * taille_case, hauteur_fenetre - 7/5 * taille_case, str(lines), COULEUR_INVERSE_BG, "center", taille=18, tag="lines")
+
+    # Rafraichissage du hold
+    if held_piece == "I" :
+        for j in range(11, 15) :
+            rectangle((j + 0.5) * taille_case, 12 * taille_case, (j + 1.5) * taille_case, 13 * taille_case, COULEUR_INVERSE_BG, COULEURS[1], tag="hold")
+
+    elif held_piece == "O":
+        for j in range(12, 14) :
+            for i in range(11, 13) :
+                    rectangle((j + 0.5) * taille_case, (i + 0.5) * taille_case, (j + 1.5) * taille_case, (i + 1.5) * taille_case, COULEUR_INVERSE_BG, COULEURS[2], tag="hold")
+
+    else :
+        for j in range(12, 15) :
+            if held_piece == "T" :
+                rectangle(j * taille_case, 12.5 * taille_case, (j + 1) * taille_case, 13.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[0], tag="hold")
+                if j == 13 :
+                    rectangle(j * taille_case, 11.5 * taille_case, (j + 1) * taille_case, 12.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[0], tag="hold")
+            
+            elif held_piece == "S" :
+                if j <= 13 :
+                    rectangle(j * taille_case, 12.5 * taille_case, (j + 1) * taille_case, 13.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[3], tag="hold")
+                if j >= 13 :
+                    rectangle(j * taille_case, 11.5 * taille_case, (j + 1) * taille_case, 12.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[3], tag="hold")
+            
+            elif held_piece == "Z" :
+                if j <= 13 :
+                    rectangle(j * taille_case, 11.5 * taille_case, (j + 1) * taille_case, 12.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[4], tag="hold")
+                if j >= 13 :
+                    rectangle(j * taille_case, 12.5 * taille_case, (j + 1) * taille_case, 13.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[4], tag="hold")
+            
+            elif held_piece == "L" :
+                rectangle(j * taille_case, 12.5 * taille_case, (j + 1) * taille_case, 13.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[5], tag="hold")
+                if j == 14 :
+                    rectangle(j * taille_case, 11.5 * taille_case, (j + 1) * taille_case, 12.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[5], tag="hold")
+            
+            elif held_piece == "J" :
+                rectangle(j * taille_case, 12.5 * taille_case, (j + 1) * taille_case, 13.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[6], tag="hold")
+                if j == 12 :
+                    rectangle(j * taille_case, 11.5 * taille_case, (j + 1) * taille_case, 12.5 * taille_case, COULEUR_INVERSE_BG, COULEURS[6], tag="hold")
+
 
 
 def pose_piece(plateau: list, lst: list) -> bool :
@@ -467,6 +520,7 @@ if __name__ == "__main__" :
         else :
             piece = Piece(random.choice(SAC))
             next_piece = random.choice(SAC)
+        held_piece = None
         affichage_plateau(plateau, piece)
         update_affichage(score, line_clears, next_piece)
         tgrav1 = time.perf_counter()
@@ -564,7 +618,6 @@ if __name__ == "__main__" :
                         update_affichage(score, line_clears, next_piece)
                     active = False
 
-                
                 elif nom_touche in ["a", "e"] :
                     if nom_touche == "a" :
                         piece.rotation_SRS("AntiClockwise")
@@ -572,10 +625,28 @@ if __name__ == "__main__" :
                         piece.rotation_SRS("Clockwise")
                     affichage_plateau(plateau, piece)
 
+                elif nom_touche == "space" :
+                    held_piece, piece = piece.nom_piece, held_piece
+                    active = False
+                    if piece == None :
+                        piece = next_piece
+                        if not RANDOM_BAGS :
+                            next_piece = random.choice(sac_en_cours)
+                            sac_en_cours.remove(next_piece)
+                            if len(sac_en_cours) == 0 :
+                                sac_en_cours = list(SAC)
+                        else :
+                            next_piece = random.choice(SAC)
+                    piece = Piece(piece)
+
+
 
             if tev == "Quitte" :
                 break
             mise_a_jour()
+            affichage_plateau(plateau, piece)
+            update_affichage(score, line_clears, next_piece)
+
 
         ferme_fenetre()
     
