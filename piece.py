@@ -1,6 +1,8 @@
-from Rotation import rotation
+from rotation import rotation
 
 class Piece :
+    """Une instance d'une pièce dans un plateau de jeu
+    """
 
     def __init__(self, nom_piece: str, cases_longueur: int, cases_hauteur: int, plateau: list[list[None | str]]):
         """Initialisation de la pièce
@@ -9,9 +11,12 @@ class Piece :
         :param int cases_longueur: Le nombre de cases en longueur du plateau
         :param int cases_hauteur: Le nombre de cases en hauteur du plateau
         :param list[list[None | str]] plateau: Le plateau de jeu
-        :return bool: Renvoie un booléen indiquant si la pièce a été créé avec succès
+        :raises Exception: Si couleur_bg est différent de "white" ou "black"
         """
 
+        if nom_piece not in ["I", "T", "L", "J", "S", "Z", "O"] :
+            raise Exception("The piece name is invalid")
+        
         self.nom_piece = nom_piece
         self.cases_longueur = cases_longueur
         self.cases_hauteur = cases_hauteur
