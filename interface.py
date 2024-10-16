@@ -11,18 +11,22 @@ class Interface() :
             #     T   ,     I    ,    O    ,   S   ,   Z  ,     L   ,      J
             # Liste des couleurs des pièces avec leur pièce respective en dessous
 
-    def __init__(self, taille_case: int, cases_longueur: int, cases_hauteur: int, couleur_bg: str, piece_queue: Piece_Queue, offsetX = 0, offsetY = 0) -> None:
+    def __init__(self, taille_case: int, cases_longueur: int, cases_hauteur: int, couleur_bg: str, piece_queue: Piece_Queue, anchrage: str = "nw", offsetX: int = 0, offsetY: int = 0) -> None:
         """Initialisation de l'interface
 
         :param int taille_case: La taille d'une case en pixel
         :param int cases_longueur: La quantité de cases en longueur (x)
         :param int cases_hauteur: La quantité de cases en hauteur (y)
         :param str couleur_bg: La couleur du fond d'écran
+        :param str anchrage: 
         :param int offsetX: La position de la zone de jeu d'un joueur par rapport au coin supérieur gauche de la fenêtre (en x)
         :param int offsetY: la position de la zone de jeu d'un joueur par rapport au coin supérieur droite de la fenêtre (en y)
         :raises Exception: Si offsetX ou offsetY est négatif
         :raises Exception: Si couleur_bg est différent de "white" ou "black"
         """
+
+        if anchrage not in ["ne", "nw", "se", "sw", "center"] :
+            raise Exception("L'orientation doit avoir la valeur ne, nw, se ou sw")
 
         if offsetX < 0 or offsetY < 0 :
             raise Exception("L'offset ne peut pas être négatif")
@@ -44,6 +48,18 @@ class Interface() :
 
         self.offsetX = offsetX
         self.offsetY = offsetY
+
+        match anchrage :
+            case "nw" :
+                self.offsetX -= -self.longueurFenetreJoueur
+            case "se" :
+                self.offsetY -= -self.hauteurFenetreJoueur
+            case "sw" :
+                self.offsetX -= self.longueurFenetreJoueur
+                self.offsetY -= self.hauteurFenetreJoueur
+            case "center" :
+                self.offsetX -= self.longueurFenetreJoueur / 2
+                self.offsetY -= self.hauteurFenetreJoueur / 2
 
 
     def initialiser_interface(self) -> None :
@@ -169,7 +185,7 @@ class Interface() :
             else :
                 for j in range(16, 19) :
                     if piece == "T" :
-                        rectangle(j * self.taille_case + self.offsetX, (3 + k) * self.taille_case + self.offsetY, (j + 1) * self.taille_case + self.offsetX, (4 + k) * self.taille_case + self.offsetX, self.COULEUR_INVERSE_BG, self.COULEURS[0], tag="next")
+                        rectangle(j * self.taille_case + self.offsetX, (3 + k) * self.taille_case + self.offsetY, (j + 1) * self.taille_case + self.offsetX, (4 + k) * self.taille_case + self.offsetY, self.COULEUR_INVERSE_BG, self.COULEURS[0], tag="next")
                         if j == 17 :
                             rectangle(j * self.taille_case + self.offsetX, (2 + k) * self.taille_case + self.offsetY, (j + 1) * self.taille_case + self.offsetX, (3 + k) * self.taille_case + self.offsetY, self.COULEUR_INVERSE_BG, self.COULEURS[0], tag="next")
                     

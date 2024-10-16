@@ -20,7 +20,7 @@ RANDOM_BAGS = False      # Valeurs possibles : True, False
 # False donne le système de 7-bag (plus de précisions sur Github)
 # True donne des pièces de manière totalement aléatoire
 
-LOCKDELAY = 1            # Valeur minimale : 0
+LOCKDELAY = 100            # Valeur minimale : 0
 # Temps (en seconde) avant qu'une pièce soit posé après qu'il entre en contact avec un obstacle (en dessous de lui)
 
 SD_SCORE = 1/20          # Valeur minimale : 0
@@ -31,7 +31,6 @@ HD_SCORE = 1/15          # Valeur minimale : SD_SCORE
 # Nombre de score par déplacement vers le bas en utilisant le Hard Drop (avec la flèche du haut)
 
 PIECE_QUEUE_LENGTH = 5   # Valeur minimale : 1
-# Nombre de pièces visibles qui arriveront après la pièce courante
 
 
 # -------------------------------------------------------------------------------------------------------------------
@@ -55,7 +54,7 @@ gravite : float
 score = 0
 line_clears = 0
 
-longueurFenetre, hauteurFenetre = 1000, 1200
+longueurFenetre, hauteurFenetre = 1920, 1080
 
 
 # -------------------------------------------------------------------------------------------------------------------
@@ -168,7 +167,8 @@ if __name__ == "__main__" :
             and type(RANDOM_BAGS) == bool
             and TAILLE_CASE >= 1
             and CASES_HAUTEUR >= 4
-            and CASES_LONGUEUR >= 4)
+            and CASES_LONGUEUR >= 4
+            and PIECE_QUEUE_LENGTH >= 1)
 
     except AssertionError:
         print("""
@@ -182,7 +182,7 @@ Elles ne respectent pas :
     plateau = [[None for _ in range(CASES_LONGUEUR)] for __ in range(CASES_HAUTEUR)]
     queue = Piece_Queue(PIECE_QUEUE_LENGTH, RANDOM_BAGS)
 
-    interface = Interface(TAILLE_CASE, CASES_LONGUEUR, CASES_HAUTEUR, COULEUR_BG, queue, TAILLE_CASE * 3, TAILLE_CASE * 3)
+    interface = Interface(TAILLE_CASE, CASES_LONGUEUR, CASES_HAUTEUR, COULEUR_BG, queue, "center", longueurFenetre / 2, hauteurFenetre / 2)
 
     # Initialise l'interface
     cree_fenetre(longueurFenetre, hauteurFenetre)
